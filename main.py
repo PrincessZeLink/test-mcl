@@ -49,7 +49,7 @@ class Launch:
 
 	def check_pressure_sensors(self):
 		# Check pressure sensors
-		for sensor_location, sensor in self.sensors.get_type('pressure').items():
+		for sensor in self.sensors.get_type('pressure').values():
 			# If the sensor's status is unsafe...
 			if sensor.status != SensorStatus.SAFE:
 				# Warn about the sensor's status
