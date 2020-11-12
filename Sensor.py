@@ -1,11 +1,7 @@
 import time
-from typing import Dict, List
-from Microcontroller import Arduino, Microcontroller, SensorController, SimulatedArduino
-from Warning import Warning
-
-SAFE = 'safe'
-WARNING = 'warning'
-CRITICAL = 'critical'
+from typing import Dict, Literal
+from Microcontroller import Arduino, SensorController, SimulatedArduino
+from enums import SensorStatus
 
 class Boundaries:
 	def __init__(self, safe_boundaries, warn_boundaries):
@@ -16,13 +12,22 @@ class Boundaries:
 	def from_config(cls, config):
 		return cls(config['safe'], config['warn'])
 
-	def get_safety(self, reading):
-		if self.safe_boundaries[0] < reading < self.safe_boundaries[1]:
-			return SAFE
-		elif self.warn_boundaries[0] < reading < self.warn_boundaries[1]: # idk how the 'warn' array works
-			return WARNING
-		else:
-			return CRITICAL
+	def get_safety(self, reading) -> SensorStatus:
+		lower_safe, upper_safe = self.safe_boundaries
+		lower_warn, upper_warn = self.warn_boundaries
+
+		if lower_safe <= reading <= upper_safe:
+			return SensorStatus.SAFE
+		
+		if lower_warn <= reading < lower_safe:
+			return SensorStatus.SUSPICIOUSLY_LOW
+		elif reading < lower_warn:
+			return SensorStatus.CRITICALLY_LOW
+
+		if upper_warn >= reading > upper_safe:
+			return SensorStatus.SUSPICIOUSLY_HIGH
+		elif reading > upper_warn:
+			return SensorStatus.CRITICALLY_HIGH
 
 class Sensor:
 	def __init__(self, type, location, kalman_args, boundaries, pin):
@@ -32,8 +37,8 @@ class Sensor:
 		self.measured_time = None
 		self.measured = None
 		self.normalized = None
-		self.status = None
-		self.type = type
+		self.status: SensorStatus = None
+		self.type: Literal['pressure', 'thermocouple'] = type
 		self.location = location
 
 	@classmethod
@@ -76,16 +81,19 @@ class SensorMap:
 
 		return value
 
-	def poll(self) -> List[Sensor]:
-		warning_sensors = []
+	def log(self):
+		import random
+
 		for locations in self.sensor_dict.values():
 			for sensor in locations.values():
-				value = self.controller.read_pin(sensor.pin)
+				value = random.randint(15, 510) # self.controller.read_pin(sensor.pin)
 				sensor.log(value, time.time())
-				if sensor.status != SAFE:
-					warning_sensors.append(sensor)
 
-		return warning_sensors
+	def get_sensor(self, type, location) -> Sensor:
+		return self.sensor_dict[type][location]
+
+	def get_type(self, type) -> Dict[str, Sensor]:
+		return self.sensor_dict[type]
 
 	@classmethod
 	def from_config(cls, config, arduino_type):

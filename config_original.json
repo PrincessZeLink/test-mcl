@@ -17,7 +17,7 @@
             "kalman_value": 1000
           },
           "boundaries": {
-            "safe": [50, 460],
+            "safe": [0, 60],
             "warn": [-500, 10000]
           },
           "pin": 14
@@ -89,7 +89,7 @@
     "send_interval": 2
   },
   "timer": {
-    "delay": 0.1
+    "delay": 0.001
   },
   "pressure_control": {
     "active_stages": ["pressurization", "autosequence", "postburn"]

@@ -63,9 +63,9 @@ class SensorController:
 	def __init__(self, arduino: Microcontroller):
 		self.arduino = arduino
 
-	def read_pin(self, pin: int) -> bytes:
+	def read_pin(self, pin: int) -> int:
 		self.arduino.write(bytes([READ, pin]))
-		return self.arduino.read(1)[0]
+		return int.from_bytes(self.arduino.read(4), byteorder='big')
 
 class ValveController:
 	def __init__(self, arduino: Microcontroller):

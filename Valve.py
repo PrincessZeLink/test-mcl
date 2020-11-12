@@ -1,3 +1,4 @@
+from typing import Dict
 from Microcontroller import Arduino, Microcontroller, SimulatedArduino, ValveController
 
 
@@ -14,7 +15,7 @@ class Valve:
 		self.natural = natural
 		self.special = special
 		self.state = None
-		self.actuation: ValveActuation = None
+		self.actuation: ValveActuation = ValveActuation(self.natural, 0)
 
 	def to_json(self):
 		return {
@@ -38,15 +39,18 @@ class ValveMap:
 		self.address = address
 		self.baud = baud
 		self.send_interval = send_interval
-		self.valve_dict = valve_dict
+		self.valve_dict: Dict[str, Dict[str, Valve]] = valve_dict
 		self.controller: ValveController = microcontroller
 
 	def get(self, valve_type, valve_location) -> Valve:
 		return self.valve_dict[valve_type][valve_location]
 
-	def set_actuation(self, valve_type, valve_location, actuation):
-		pin = self.get(valve_type, valve_location).pin
-		self.controller.set_pin(pin, actuation)
+	def set_actuation(self, valve_type, valve_location, actuation: ValveActuation):
+		valve = self.valve_dict[valve_type][valve_location]
+		valve.actuation = actuation
+
+		# TODO update this
+		self.controller.set_pin(valve.pin, actuation)
 
 	@classmethod
 	def from_config(cls, valves_config, arduino_type):

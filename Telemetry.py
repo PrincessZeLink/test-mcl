@@ -1,3 +1,7 @@
+import json
+
+from enums import LogPriority
+
 class Telemetry:
 	def __init__(self, GS_IP, GS_PORT, DELAY, SOCKETIO_HOST, SOCKETIO_PORT, on_message):
 		self.GS_IP = GS_IP
@@ -7,14 +11,29 @@ class Telemetry:
 		self.SOCKETIO_PORT = SOCKETIO_PORT
 		self.on_message = on_message
 
+		# This is where you specify what gets logged
+		self.log_level = LogPriority.WARN
+
 	def reset(self):
 		pass
 
-	def warn(self, type, payload):
-		print("Warning:", type, payload)
+	def critical(self, type, payload):
+		self.log(type, payload. LogPriority.CRITICAL)
 
-	def log(self, type, payload):
-		pass
+	def warn(self, type, payload):
+		self.log(type, payload, LogPriority.WARN)
+
+	def info(self, type, payload):
+		self.log(type, payload, LogPriority.INFO)
+
+	def log(self, type, payload, priority):
+		if priority >= self.log_level:
+			packet = {
+				"type": type,
+				"payload": payload
+			}
+			print("Info:", json.dumps(packet))
+
 
 	@classmethod
 	def from_config(cls, config, on_message):
